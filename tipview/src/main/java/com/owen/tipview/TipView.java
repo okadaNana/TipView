@@ -1,5 +1,6 @@
 package com.owen.tipview;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -7,6 +8,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 
 public class TipView extends RelativeLayout {
@@ -20,8 +23,18 @@ public class TipView extends RelativeLayout {
 
     private Paint mSystemCanvasPaint;
 
+    private Activity mActivity;
+    private View mTargetView;
+
     public TipView(Context context) {
         super(context);
+
+        if (!(context instanceof Activity)) {
+            throw new IllegalArgumentException("You should pass Activity as parameter");
+        }
+        mActivity = (Activity) context;
+
+        setClickable(true);  // 这句话可以拦截点击事件，这样 contentView 里的控件就不能点击了
 
         /*
          * let ViewGroup to invoke onDraw() method,
@@ -54,5 +67,31 @@ public class TipView extends RelativeLayout {
         mMaskCanvas.drawCircle(180, 230, 100, mTransparentPaint);
 
         systemCanvas.drawBitmap(mMaskBitmap, 0, 0, mSystemCanvasPaint);
+    }
+
+    public void setTargetView(View targetView) {
+        mTargetView = targetView;
+    }
+
+    public void show() {
+        ((ViewGroup) mActivity.getWindow().getDecorView()).addView(this);
+    }
+
+    public static class Builder {
+
+        TipView mTipView;
+
+        public Builder(Context context) {
+            mTipView = new TipView(context);
+        }
+
+        public Builder setTargetView(View view) {
+            mTipView.setTargetView(view);
+            return this;
+        }
+
+        public TipView build() {
+            return mTipView;
+        }
     }
 }
