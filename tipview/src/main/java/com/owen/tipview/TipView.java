@@ -6,13 +6,18 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.RelativeLayout;
 
 public class TipView extends RelativeLayout {
+
+    private static final String TAG = "TipViewOwen";
 
     private Bitmap mMaskBitmap;
     private Canvas mMaskCanvas;
@@ -64,10 +69,13 @@ public class TipView extends RelativeLayout {
         }
         mMaskCanvas.drawRect(0, 0, mMaskCanvas.getWidth(), mMaskCanvas.getHeight(), mMaskPaint);
         // 在遮罩层上挖一个洞
-        mMaskCanvas.drawCircle(180, 230, 100, mTransparentPaint);
+//        mMaskCanvas.drawCircle(180, 230, 100, mTransparentPaint);
+        mMaskCanvas.drawCircle(mPoint.x, mPoint.y, mTargetView.getWidth() / 2, mTransparentPaint);
 
         systemCanvas.drawBitmap(mMaskBitmap, 0, 0, mSystemCanvasPaint);
     }
+
+    private Point mPoint;
 
     public void setTargetView(View targetView) {
         mTargetView = targetView;
@@ -75,6 +83,24 @@ public class TipView extends RelativeLayout {
 
     public void show() {
         ((ViewGroup) mActivity.getWindow().getDecorView()).addView(this);
+
+        mTargetView.getViewTreeObserver().addOnGlobalLayoutListener(
+                new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        int[] location = new int[2];
+                        mTargetView.getLocationInWindow(location);
+                        int x =  location[0] + mTargetView.getWidth() / 2;
+                        int y = location[1] + mTargetView.getHeight() / 2;
+                        mPoint = new Point(x, y);
+
+                        if (Build.VERSION.SDK_INT<16) {
+                            mTargetView.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                        } else {
+                            mTargetView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                        }
+                    }
+                });
     }
 
     public static class Builder {
